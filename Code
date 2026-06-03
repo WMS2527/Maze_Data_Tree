@@ -97,5 +97,5 @@ if __name__ == "__main__":
     branch_c4.add_child(branch_c5)
     branch_c5.add_child(branch_c6)
 
-    Print the generated tree structures
+    # Print the generated tree structures
     print_tree_paths(root)
