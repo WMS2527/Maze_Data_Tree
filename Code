@@ -1,113 +1,101 @@
-class Node:
-    def __init__(self, data):
-        self.left = None
-        self.right = None
-        self.data = data
+class TreeNode:
+    def __init__(self, coord, action, status=None):
 
+        self.coord = coord
+        self.action = action
+        self.status = status
+        self.children = []
 
-# --- Maze Helper Functions ---
+    def add_child(self, child_node):
+        """Adds a subsequent movement/step to this node."""
+        self.children.append(child_node)
 
+def print_tree_paths(node, current_path=None):
+    """
+    Finds all paths from the root to the leaf nodes
+    and prints them with the specific dash indentation format.
+    """
+    if current_path is None:
+        current_path = []
 
-def encode(row, col):
-    #Converts (row, col) to a unique ID from 0 to 35.
-    return (row * 6) + col
+    # Append current node to the tracking path
+    current_path.append(node)
 
+    # If it's a leaf node (no more children), print the entire path accumulated so far
+    if not node.children:
+        for depth, path_node in enumerate(current_path):
+            # Calculate the prefix dashes (4 dashes per level of depth)
+            indentation = "-" * (depth * 4)
+           
+            # Format the coordinates and the action label
+            if path_node.action == "START":
+                line = f"{indentation}{path_node.coord[0]},{path_node.coord[1]} START"
+            else:
+                line = f"{indentation}{path_node.coord[0]},{path_node.coord[1]} ({path_node.action})"
+           
+            # Append terminal status if it exists
+            if path_node.status:
+                line += f" {path_node.status}"
+               
+            print(line)
+        print()  # Empty line separator between distinct paths
+    else:
+        # Otherwise, continue depth-first traversal through all child branches
+        for child in node.children:
+            print_tree_paths(child, list(current_path))
 
-def decode(val):
-    #Converts a unique ID back to a readable (row, col) tuple.
-    return (val // 6, val % 6)
-
-
-def build_physical_maze():
-    # Create all grid cells first
-    nodes = {encode(r, c): Node(encode(r, c)) for r in range(6) for c in range(6)}
-   
-    # Trace the physical paths from your drawing image and link left/right manually
-    def link(parent_rc, left_rc=None, right_rc=None):
-        p = nodes[encode(*parent_rc)]
-        if left_rc:   p.left = nodes[encode(*left_rc)]
-        if right_rc:  p.right = nodes[encode(*right_rc)]
-
-
-    # Main column 0 pathway going down
-    link((0,0), left_rc=(1,0))
-    link((1,0), left_rc=(2,0))
-    link((2,0), left_rc=(3,0))
-    link((3,0), left_rc=(4,0))
-   
-    # Junction at (4,0): can go to bottom dead-end (5,0) or turn right into (4,1)
-    link((4,0), left_rc=(5,0), right_rc=(4,1))
-    link((5,0), left_rc=(5,1))  # (5,1) is a dead end
-   
-    # Path moving back up through Column 1
-    link((4,1), left_rc=(3,1))
-    link((3,1), left_rc=(2,1))
-    link((2,1), left_rc=(1,1))
-    link((1,1), left_rc=(0,1))
-   
-    # (0,1) splits into the central loops or alternative branches
-    link((0,1), left_rc=(2,2))
-   
-    # Central loop structures
-    link((2,2), left_rc=(3,2))
-    link((3,2), left_rc=(4,2))
-    link((4,2), left_rc=(5,2))
-    link((5,2), left_rc=(5,3))
-    link((5,3), left_rc=(4,3))
-    link((4,3), left_rc=(3,3))
-   
-    # Path crossing over to Column 4
-    link((3,3), left_rc=(5,4))
-    link((5,4), left_rc=(4,4))
-    link((4,4), left_rc=(3,4))
-    link((3,4), left_rc=(2,4))
-    link((2,4), left_rc=(1,4))
-   
-    # Sharp turn at (1,4) splits into the top-right dead ends OR down to column 5
-    link((1,4), left_rc=(1,5), right_rc=(2,5))
-    link((1,5), left_rc=(0,5))  # (0,5) is a dead end
-   
-    # Column 5 path dropping down to the outer loop
-    link((2,5), left_rc=(3,5))
-    link((3,5), left_rc=(4,5))
-    link((4,5), left_rc=(5,5))
-   
-    # Outer path loops back around toward the final corridor sequence
-    link((5,5), left_rc=(1,3))
-   
-    # Final corridor sequence pathing
-    link((1,3), left_rc=(1,2))
-    link((1,2), left_rc=(0,2))
-    link((0,2), left_rc=(0,3))  # (0,3) is the final leaf node
-   
-    return nodes[encode(0,0)]
-
-
-def print_tree_formatted(node, depth=0, branch_type="C"):
-    if node is None:
-        return
-
-
-    coord = decode(node.data)
-    dashes = "-" * depth
-   
-    # Status flags (only tracking whether a path ends completely)
-    status = ""
-    if node.left is None and node.right is None:
-        status = " DEAD END"
-
-
-    print(f"{dashes}{coord} ({branch_type}){status}")
-
-
-    # Display child branches
-    if node.left:
-        print_tree_formatted(node.left, depth + 1, "L")
-    if node.right:
-        print_tree_formatted(node.right, depth + 1, "R")
-
-
-# --- Execute Program ---
+# --- Demonstration & Tree Construction ---
 if __name__ == "__main__":
-    maze_root = build_physical_maze()
-    print_tree_formatted(maze_root)
+    # 1. Create the root node
+    root = TreeNode((0, 0), "START")
+
+    # 2. Build Path 1 (Shared common ancestors up to 4,1)
+    n1 = TreeNode((1, 0), "S")
+    n2 = TreeNode((2, 0), "S")
+    n3 = TreeNode((3, 0), "S")
+    n4 = TreeNode((4, 0), "S")
+    n5 = TreeNode((4, 1), "L")
+    n6 = TreeNode((4, 2), "S")
+
+    # Connect the main trunk
+    root.add_child(n1)
+    n1.add_child(n2)
+    n2.add_child(n3)
+    n3.add_child(n4)
+    n4.add_child(n5)
+    n5.add_child(n6)
+
+    # Branch A: Leads to the first DEAD END
+    branch_a1 = TreeNode((5, 2), "R")
+    branch_a2 = TreeNode((5, 1), "R")
+    branch_a3 = TreeNode((5, 0), "S", status="DEAD END")
+    n6.add_child(branch_a1)
+    branch_a1.add_child(branch_a2)
+    branch_a2.add_child(branch_a3)
+
+    # Branch B: Leads to the second DEAD END
+    branch_b1 = TreeNode((3, 2), "L")
+    branch_b2 = TreeNode((3, 1), "L")
+    branch_b3 = TreeNode((2, 1), "R")
+    branch_b4 = TreeNode((0, 1), "S", status="DEAD END")
+    n6.add_child(branch_b1)
+    branch_b1.add_child(branch_b2)
+    branch_b2.add_child(branch_b3)
+    branch_b3.add_child(branch_b4)
+
+    # Branch C: Leads to the FINISH
+    branch_c1 = TreeNode((2, 2), "S")
+    branch_c2 = TreeNode((2, 3), "R")
+    branch_c3 = TreeNode((1, 3), "S")
+    branch_c4 = TreeNode((0, 3), "R")
+    branch_c5 = TreeNode((0, 4), "L")
+    branch_c6 = TreeNode((0, 5), "S", status="FINISH")
+    branch_b1.add_child(branch_c1)  # Splits off from (3,2)
+    branch_c1.add_child(branch_c2)
+    branch_c2.add_child(branch_c3)
+    branch_c3.add_child(branch_c4)
+    branch_c4.add_child(branch_c5)
+    branch_c5.add_child(branch_c6)
+
+    Print the generated tree structures
+    print_tree_paths(root)
